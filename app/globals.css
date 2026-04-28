@@ -59,6 +59,144 @@ a {
   padding: 0;
 }
 
+.welcome-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: clamp(32px, 8vh, 92px) 18px clamp(42px, 9vh, 100px);
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.92), transparent 30%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(135deg, #f5f7ff 0%, #edf0ff 54%, #f8f1fb 100%);
+}
+
+.welcome-card {
+  display: flex;
+  width: min(100%, 390px);
+  max-width: calc(100vw - 36px);
+  flex-direction: column;
+  align-items: center;
+  padding: 34px 24px 52px;
+  overflow: hidden;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(255, 255, 255, 0.93)),
+    linear-gradient(145deg, rgba(239, 242, 255, 0.6), rgba(250, 240, 252, 0.46));
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 30px;
+  box-shadow:
+    0 24px 58px rgba(96, 116, 232, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.welcome-logo {
+  display: block;
+  width: min(100%, 178px);
+  height: auto;
+  margin: 0 auto 24px;
+  border-radius: 24px;
+  box-shadow:
+    0 18px 34px rgba(116, 86, 167, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.welcome-card h1 {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 auto 18px;
+  overflow: hidden;
+  color: var(--brand-end);
+  font-size: clamp(18px, 4.75vw, 23px);
+  font-weight: 850;
+  line-height: 1.22;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.welcome-title-fit {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.welcome-card p {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto 44px;
+  color: #3f424f;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.42;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  word-break: break-word;
+}
+
+.welcome-start-button {
+  position: relative;
+  display: inline-flex;
+  width: min(100%, 220px);
+  min-height: 64px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 28px;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, #6578ee 0%, #715dcc 58%, #8955b5 100%);
+  border: 0;
+  border-radius: 999px;
+  box-shadow:
+    0 16px 34px rgba(102, 112, 238, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 820;
+  cursor: pointer;
+}
+
+@media (max-width: 360px) {
+  .welcome-card {
+    padding: 30px 18px 48px;
+  }
+
+  .welcome-logo {
+    width: min(100%, 166px);
+    margin-bottom: 22px;
+  }
+
+  .welcome-card h1 {
+    font-size: clamp(18px, 6.05vw, 21px);
+  }
+
+  .welcome-card p {
+    font-size: 14px;
+    margin-bottom: 38px;
+  }
+
+  .welcome-start-button {
+    width: min(100%, 218px);
+    min-height: 60px;
+    font-size: 19px;
+  }
+}
+
+.welcome-start-button::after {
+  position: absolute;
+  inset: 1px;
+  content: "";
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 56%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.welcome-start-button span,
+.welcome-start-button svg {
+  position: relative;
+  z-index: 1;
+}
+
 .completion-sheet {
   width: 100%;
   min-height: min(882px, calc(100vh - 1px));
@@ -995,16 +1133,24 @@ a {
   position: relative;
   display: flex;
   min-height: 0;
-  aspect-ratio: 1;
+  aspect-ratio: 1440 / 1221;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  gap: 8px;
   overflow: hidden;
-  background:
-    linear-gradient(135deg, rgba(246, 248, 255, 0.96), rgba(255, 247, 250, 0.92));
-  border: 1px dashed rgba(102, 112, 238, 0.24);
+  background: #fff;
+  border: 1px solid rgba(102, 112, 238, 0.12);
   border-radius: 14px;
+}
+
+.size-reference__image,
+.combination-preview__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.size-reference__image {
+  object-fit: contain;
 }
 
 .illustration-placeholder__title {
@@ -1112,7 +1258,9 @@ a {
 }
 
 .soft-hint--caption {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   padding: 12px 22px;
   color: #65708a;
   background: rgba(255, 255, 255, 0.72);
@@ -1121,6 +1269,12 @@ a {
   font-size: 11px;
   font-weight: 520;
   line-height: 1.45;
+}
+
+.soft-hint__icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--accent);
 }
 
 .combination-list,
@@ -1132,9 +1286,10 @@ a {
 
 .combination-card {
   display: grid;
-  grid-template-columns: clamp(112px, 36%, 132px) minmax(0, 1fr);
+  grid-template-columns: clamp(118px, 34%, 128px) minmax(0, 1fr);
   gap: 0;
-  min-height: 118px;
+  height: 132px;
+  min-height: 0;
   padding: 0;
   overflow: hidden;
   background:
@@ -1148,15 +1303,20 @@ a {
 
 .combination-preview {
   display: flex;
-  aspect-ratio: 1;
-  align-self: start;
+  height: 100%;
+  align-self: stretch;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  gap: 6px;
-  background:
-    linear-gradient(135deg, rgba(246, 248, 255, 0.96), rgba(255, 247, 250, 0.92));
+  box-sizing: border-box;
+  padding: 5px;
+  background: #fff;
   border-right: 1px solid rgba(102, 112, 238, 0.1);
+  overflow: hidden;
+}
+
+.combination-preview__image {
+  object-fit: cover;
+  border-radius: 10px;
 }
 
 .combination-copy {
@@ -1164,8 +1324,8 @@ a {
   min-width: 0;
   flex-direction: column;
   justify-content: center;
-  gap: 10px;
-  padding: 16px 14px 14px 16px;
+  gap: 7px;
+  padding: 12px 12px 12px 14px;
 }
 
 .combination-copy__head {
@@ -1177,15 +1337,15 @@ a {
 
 .combination-title {
   color: var(--text);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  line-height: 1.28;
+  line-height: 1.22;
 }
 
 .combination-title small {
   display: block;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
 }
 
@@ -1218,9 +1378,9 @@ a {
 
 .combination-desc {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 550;
-  line-height: 1.45;
+  line-height: 1.38;
 }
 
 .budget-grid {

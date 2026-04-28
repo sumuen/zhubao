@@ -7,6 +7,7 @@ import {
   Check,
   Crown,
   Gem,
+  Info,
   Minus,
   Palette,
   Ruler,
@@ -14,10 +15,11 @@ import {
   Star,
   Waves,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CompletionPage } from "@/components/CompletionPage";
 import { colorPalette, initialQuestionnaireState } from "@/lib/questionnaire-data";
 import type { PreferenceSummaryData, QuestionnaireState } from "@/lib/types";
+import type { FittyInstance } from "fitty";
 
 const totalSteps = 8;
 
@@ -34,6 +36,7 @@ const combinationOptions = [
     badge: "19%顾客选择",
     badgeTone: "cool",
     imageSlot: "图3-1",
+    imageSrc: "/reference-images/3-1.jpg",
     description: "风格纯粹，经典耐看，更显素雅大气",
   },
   {
@@ -43,6 +46,7 @@ const combinationOptions = [
     badge: "72%顾客选择",
     badgeTone: "warm",
     imageSlot: "图3-2",
+    imageSrc: "/reference-images/3-2.jpg",
     description: "最受欢迎，在丰富与简约间的平衡，水晶之美交相辉映。",
   },
   {
@@ -52,6 +56,7 @@ const combinationOptions = [
     badge: "9%顾客选择",
     badgeTone: "rose",
     imageSlot: "图3-3",
+    imageSrc: "/reference-images/3-3.jpg",
     description: "汇聚尽可能多种的水晶，色彩缤纷而明亮",
   },
 ];
@@ -87,6 +92,7 @@ export function QuestionnairePage({
 }: QuestionnairePageProps) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<QuestionnaireState>(initialState);
+  const [hasStarted, setHasStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
   const wristEstimateText = useMemo(
@@ -117,6 +123,17 @@ export function QuestionnairePage({
 
   if (isComplete) {
     return <CompletionPage data={toPreferenceSummary(form, wristEstimateText)} />;
+  }
+
+  if (!hasStarted) {
+    return (
+      <WelcomeScreen
+        onStart={() => {
+          setHasStarted(true);
+          window.scrollTo({ top: 0, left: 0 });
+        }}
+      />
+    );
   }
 
   function update<K extends keyof QuestionnaireState>(
@@ -269,9 +286,11 @@ export function QuestionnairePage({
                   onClick={() => toggleList("combinations", option.value, 2)}
                 >
                   <span className="combination-preview">
-                    <span className="illustration-placeholder__code">{option.imageSlot}</span>
-                    <span className="illustration-placeholder__title">示意图待填入</span>
-                    <span className="illustration-placeholder__meta">{option.value}水晶</span>
+                    <img
+                      className="combination-preview__image"
+                      src={option.imageSrc}
+                      alt={`${option.imageSlot} ${option.value}水晶搭配示意图`}
+                    />
                   </span>
                   <span className="combination-copy">
                     <span className="combination-copy__head">
@@ -288,7 +307,10 @@ export function QuestionnairePage({
               ))}
             </div>
             <p className="soft-hint soft-hint--caption">
-              示意图仅展示水晶种类数量简略所影响的风格，不代表为您设计的具体款式、水晶品质
+              <Info className="soft-hint__icon" size={13} aria-hidden="true" />
+              <span>
+                示意图仅展示水晶种类数量简略所影响的风格，不代表为您设计的具体款式、水晶品质
+              </span>
             </p>
           </QuestionStep>
         )}
@@ -502,11 +524,80 @@ function BraceletSizeReference() {
   return (
     <figure className="size-reference" aria-label="珠子大小参考">
       <div className="size-reference__stage">
-        <span className="illustration-placeholder__code">图1-1</span>
-        <span className="illustration-placeholder__title">示意图待填入</span>
-        <span className="illustration-placeholder__meta">珠子大小对比</span>
+        <img
+          className="size-reference__image"
+          src="/reference-images/1-1.jpg"
+          alt="图1-1 珠子大小对比示意图"
+        />
       </div>
     </figure>
+  );
+}
+
+function WelcomeScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <main className="welcome-shell">
+      <section className="welcome-card" aria-labelledby="welcome-title">
+        <img
+          className="welcome-logo"
+          src="/brand/snow-design-logo.png"
+          alt="Snow's Design Crystal Jewelry"
+        />
+        <AutoFitWelcomeTitle>🔮客户专属定制偏好</AutoFitWelcomeTitle>
+        <p>请您开启Snow&apos;s Design专属能量定制之旅</p>
+        <button className="welcome-start-button" type="button" onClick={onStart}>
+          <span>开始定制</span>
+          <ArrowRight size={23} strokeWidth={2.7} aria-hidden="true" />
+        </button>
+      </section>
+    </main>
+  );
+}
+
+function AutoFitWelcomeTitle({ children }: { children: string }) {
+  const titleTextRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const titleText = titleTextRef.current;
+
+    if (!titleText) {
+      return;
+    }
+
+    let isMounted = true;
+    let fittyInstance: FittyInstance | null = null;
+
+    void import("fitty").then(({ default: fitty }) => {
+      if (!isMounted || !titleText.isConnected) {
+        return;
+      }
+
+      fittyInstance = fitty(titleText, {
+        minSize: 1,
+        maxSize: 23,
+        multiLine: false,
+      });
+      fittyInstance.fit({ sync: true });
+
+      void document.fonts?.ready.then(() => {
+        if (isMounted) {
+          fittyInstance?.fit({ sync: true });
+        }
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      fittyInstance?.unsubscribe();
+    };
+  }, [children]);
+
+  return (
+    <h1 id="welcome-title">
+      <span className="welcome-title-fit" ref={titleTextRef}>
+        {children}
+      </span>
+    </h1>
   );
 }
 
@@ -551,6 +642,28 @@ function ColorChipGrid({
   );
 }
 
+const wristHeightRanges = [
+  { min: 150, max: 155 },
+  { min: 155, max: 160 },
+  { min: 160, max: 165 },
+  { min: 165, max: 170 },
+] as const;
+
+type WristSizeCell = number | null;
+type WristWeightRow =
+  | { minJin: number; maxJin: number; sizes: WristSizeCell[] }
+  | { jin: number; sizes: WristSizeCell[] };
+
+const wristWeightRows: WristWeightRow[] = [
+  { minJin: 80, maxJin: 90, sizes: [13.5, 13.5, 13.5, null] },
+  { jin: 95, sizes: [14, 14, 14, 14] },
+  { jin: 100, sizes: [15, 14.5, 14.5, 14] },
+  { jin: 110, sizes: [15.5, 15, 15, 14.5] },
+  { jin: 120, sizes: [16, 16, 15.5, 15] },
+  { jin: 130, sizes: [17, 16.5, 16, 15.5] },
+  { jin: 140, sizes: [18, 17, 17, 16] },
+];
+
 function getWristEstimateText(height: string, weight: string) {
   const heightValue = Number(height);
   const weightValue = Number(weight);
@@ -559,7 +672,60 @@ function getWristEstimateText(height: string, weight: string) {
     return "填写身高体重后估算";
   }
 
-  return "待接入估算逻辑";
+  const heightIndex = getWristHeightIndex(heightValue);
+  const weightRow = getWristWeightRow(weightValue * 2);
+
+  if (heightIndex === null || !weightRow) {
+    return "超出参考范围，请人工确认";
+  }
+
+  const wristSize = weightRow.sizes[heightIndex];
+
+  return wristSize ? formatWristSize(wristSize) : "超出参考范围，请人工确认";
+}
+
+function getWristHeightIndex(height: number) {
+  if (
+    height < wristHeightRanges[0].min ||
+    height > wristHeightRanges[wristHeightRanges.length - 1].max
+  ) {
+    return null;
+  }
+
+  const index = wristHeightRanges.findIndex(({ min, max }, rangeIndex) =>
+    rangeIndex === 0 ? height >= min && height <= max : height > min && height <= max,
+  );
+
+  return index === -1 ? null : index;
+}
+
+function getWristWeightRow(weightJin: number) {
+  const firstRow = wristWeightRows[0];
+  const lastRow = wristWeightRows[wristWeightRows.length - 1];
+  const minJin = "minJin" in firstRow ? firstRow.minJin : firstRow.jin;
+  const maxJin = "jin" in lastRow ? lastRow.jin : lastRow.maxJin;
+
+  if (weightJin < minJin || weightJin > maxJin) {
+    return null;
+  }
+
+  const rangeRow = wristWeightRows.find(
+    (row) => "minJin" in row && weightJin >= row.minJin && weightJin <= row.maxJin,
+  );
+
+  if (rangeRow) {
+    return rangeRow;
+  }
+
+  return wristWeightRows
+    .filter((row): row is Extract<WristWeightRow, { jin: number }> => "jin" in row)
+    .reduce((nearest, row) =>
+      Math.abs(weightJin - row.jin) < Math.abs(weightJin - nearest.jin) ? row : nearest,
+    );
+}
+
+function formatWristSize(size: number) {
+  return `${Number.isInteger(size) ? size.toFixed(0) : size.toFixed(1)}cm`;
 }
 
 function toPreferenceSummary(

@@ -1,6 +1,5 @@
-import { CompletionPage } from "@/components/CompletionPage";
-import { mockPreferenceSummary } from "@/lib/mock-data";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return <CompletionPage data={mockPreferenceSummary} />;
+  redirect("/prefer/1?edit=True");
 }

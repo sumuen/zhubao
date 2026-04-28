@@ -77,9 +77,9 @@ npm run start -- --hostname 0.0.0.0 --port 3000
 ## 常用页面
 
 ```text
-/              完成页 demo
-/prefer/1      完成页 demo
-/prefer/1?edit=True   问卷编辑页
+/              自动跳转到问卷编辑页
+/prefer/1?edit=True   默认问卷编辑页，完成全部步骤后进入“问卷完成！”页面
+/prefer/1      问卷完成页 demo
 /step          定制流程页
 /CustomerReview 顾客反馈页
 ```
