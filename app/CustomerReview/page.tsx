@@ -18,7 +18,7 @@ export default function CustomerReviewPage() {
           返回偏好总结
         </a>
         <MessageCircle size={44} aria-hidden="true" />
-        <h1>品牌名XX客户反馈集锦</h1>
+        <h1>Snow's Design客户反馈集锦</h1>
         <p>真实客户评价风格的本地演示页面。</p>
         <div className="review-stats">
           <span>

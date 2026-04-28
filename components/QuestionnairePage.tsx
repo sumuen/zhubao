@@ -22,9 +22,21 @@ import type { PreferenceSummaryData, QuestionnaireState } from "@/lib/types";
 import type { FittyInstance } from "fitty";
 
 const totalSteps = 8;
+const largeBeadSizeValue = "12-15mm";
+const blockedLargeBeadBudgetValue = "500元以内";
+const largeBeadBudgetWarningText =
+  "亲，选择大珠珠时，预算500元以内无法保障纯天然水晶品质，请调整预算或珠子大小";
+const maxTextureSelections = 2;
+const textureLimitWarningText = "最多只能选择两项";
+const maxAccessorySelections = 2;
+const accessoryLimitWarningText = "最多只能选择两项配饰";
+const silverAccessoryValue = "银配饰";
+const kGoldAccessoryValue = "k金配饰";
+const accessoryBudgetHintText =
+  "亲，目前黄金价格太高，预算2000元以内难以搭配k金配饰；类似的预算500元以内难以搭配纯银配饰哦";
 
 const beadOptions = [
-  { value: "12-15mm", title: "12-15mm", description: "大气奢华", tone: "large" },
+  { value: largeBeadSizeValue, title: "12-15mm", description: "大气奢华", tone: "large" },
   { value: "8-10mm", title: "8-10mm", description: "精致小巧", tone: "small" },
 ];
 
@@ -72,8 +84,16 @@ const budgetOptions = [
   ["1.5万元以上", "收藏级别"],
 ];
 
-const colorIntensityOptions = ["淡雅一点", "适中", "浓郁一点"];
-const textureOptions = ["清透一点", "质感适中", "实感一点"];
+const colorIntensityOptions = [
+  { value: "淡雅一点", label: "淡雅一点", color: "#FFE4E1" },
+  { value: "适中", label: "颜色适中", color: "#FF6B6B" },
+  { value: "浓郁一点", label: "浓郁一点", color: "#8B0000" },
+] as const;
+const textureOptions = [
+  { value: "清透一点", label: "清透一点", tone: "clear" },
+  { value: "质感适中", label: "质感适中", tone: "balanced" },
+  { value: "实感一点", label: "实感一点", tone: "solid" },
+] as const;
 
 const accessoryOptions = [
   ["水晶跑环/随形珠等", "闪耀夺目，凸显天然水晶之美", Gem],
@@ -94,11 +114,77 @@ export function QuestionnairePage({
   const [form, setForm] = useState<QuestionnaireState>(initialState);
   const [hasStarted, setHasStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [showBudgetWarning, setShowBudgetWarning] = useState(false);
+  const [showTextureWarning, setShowTextureWarning] = useState(false);
+  const [showAccessoryWarning, setShowAccessoryWarning] = useState(false);
+  const budgetWarningTimerRef = useRef<number | null>(null);
+  const textureWarningTimerRef = useRef<number | null>(null);
+  const accessoryWarningTimerRef = useRef<number | null>(null);
+  const hasLargeBeadSize = form.beadSizes.includes(largeBeadSizeValue);
 
   const wristEstimateText = useMemo(
     () => getWristEstimateText(form.height, form.weight),
     [form.height, form.weight],
   );
+  const accessoryBudgetRestriction = useMemo(
+    () => getAccessoryBudgetRestriction(form.budgetPreset, form.exactBudget),
+    [form.budgetPreset, form.exactBudget],
+  );
+  const budgetBlockedAccessories = useMemo(
+    () => getBudgetBlockedAccessories(accessoryBudgetRestriction),
+    [accessoryBudgetRestriction],
+  );
+
+  useEffect(() => {
+    if (!hasLargeBeadSize && showBudgetWarning) {
+      hideBudgetWarning();
+    }
+  }, [hasLargeBeadSize, showBudgetWarning]);
+
+  useEffect(() => {
+    setForm((current) =>
+      current.beadSizes.includes(largeBeadSizeValue) &&
+      current.budgetPreset === blockedLargeBeadBudgetValue
+        ? { ...current, budgetPreset: "" }
+        : current,
+    );
+  }, [form.beadSizes, form.budgetPreset]);
+
+  useEffect(() => {
+    return () => {
+      clearBudgetWarningTimer();
+      clearTextureWarningTimer();
+      clearAccessoryWarningTimer();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (step !== 6 && showTextureWarning) {
+      hideTextureWarning();
+    }
+  }, [showTextureWarning, step]);
+
+  useEffect(() => {
+    if (step !== 7 && showAccessoryWarning) {
+      hideAccessoryWarning();
+    }
+  }, [showAccessoryWarning, step]);
+
+  useEffect(() => {
+    if (budgetBlockedAccessories.length === 0) {
+      return;
+    }
+
+    setForm((current) => {
+      const nextAccessories = current.accessories.filter(
+        (value) => !budgetBlockedAccessories.includes(value),
+      );
+
+      return nextAccessories.length === current.accessories.length
+        ? current
+        : { ...current, accessories: nextAccessories };
+    });
+  }, [budgetBlockedAccessories]);
 
   const isCurrentStepValid = useMemo(() => {
     switch (step) {
@@ -188,6 +274,111 @@ export function QuestionnairePage({
   function goBack() {
     setStep((value) => Math.max(1, value - 1));
     window.scrollTo({ top: 0, left: 0 });
+  }
+
+  function clearBudgetWarningTimer() {
+    if (budgetWarningTimerRef.current !== null) {
+      window.clearTimeout(budgetWarningTimerRef.current);
+      budgetWarningTimerRef.current = null;
+    }
+  }
+
+  function hideBudgetWarning() {
+    clearBudgetWarningTimer();
+    setShowBudgetWarning(false);
+  }
+
+  function showLargeBeadBudgetWarning() {
+    clearBudgetWarningTimer();
+    setShowBudgetWarning(true);
+    budgetWarningTimerRef.current = window.setTimeout(() => {
+      setShowBudgetWarning(false);
+      budgetWarningTimerRef.current = null;
+    }, 5000);
+  }
+
+  function isLargeBeadBudgetBlocked(value: string) {
+    return hasLargeBeadSize && value === blockedLargeBeadBudgetValue;
+  }
+
+  function handleBudgetPresetClick(value: string) {
+    if (isLargeBeadBudgetBlocked(value)) {
+      setForm((current) =>
+        current.budgetPreset ? { ...current, budgetPreset: "" } : current,
+      );
+      showLargeBeadBudgetWarning();
+      return;
+    }
+
+    hideBudgetWarning();
+    update("budgetPreset", value);
+  }
+
+  function clearTextureWarningTimer() {
+    if (textureWarningTimerRef.current !== null) {
+      window.clearTimeout(textureWarningTimerRef.current);
+      textureWarningTimerRef.current = null;
+    }
+  }
+
+  function hideTextureWarning() {
+    clearTextureWarningTimer();
+    setShowTextureWarning(false);
+  }
+
+  function showTextureLimitWarning() {
+    clearTextureWarningTimer();
+    setShowTextureWarning(true);
+    textureWarningTimerRef.current = window.setTimeout(() => {
+      setShowTextureWarning(false);
+      textureWarningTimerRef.current = null;
+    }, 5000);
+  }
+
+  function handleTextureClick(value: string) {
+    if (!form.textures.includes(value) && form.textures.length >= maxTextureSelections) {
+      showTextureLimitWarning();
+      return;
+    }
+
+    hideTextureWarning();
+    toggleList("textures", value);
+  }
+
+  function clearAccessoryWarningTimer() {
+    if (accessoryWarningTimerRef.current !== null) {
+      window.clearTimeout(accessoryWarningTimerRef.current);
+      accessoryWarningTimerRef.current = null;
+    }
+  }
+
+  function hideAccessoryWarning() {
+    clearAccessoryWarningTimer();
+    setShowAccessoryWarning(false);
+  }
+
+  function showAccessoryLimitWarning() {
+    clearAccessoryWarningTimer();
+    setShowAccessoryWarning(true);
+    accessoryWarningTimerRef.current = window.setTimeout(() => {
+      setShowAccessoryWarning(false);
+      accessoryWarningTimerRef.current = null;
+    }, 5000);
+  }
+
+  function handleAccessoryClick(value: string) {
+    if (budgetBlockedAccessories.includes(value)) {
+      hideAccessoryWarning();
+      return;
+    }
+
+    if (!form.accessories.includes(value) && form.accessories.length >= maxAccessorySelections) {
+      showAccessoryLimitWarning();
+      return;
+    }
+
+    hideAccessoryWarning();
+    toggleList("accessories", value);
   }
 
   return (
@@ -321,18 +512,31 @@ export function QuestionnairePage({
             icon={<Crown />}
             description="设计师会根据预算选用相应品级的水晶"
           >
-            <div className="budget-grid">
-              {budgetOptions.map(([value, desc]) => (
-                <button
-                  className={choiceClass(form.budgetPreset === value)}
-                  key={value}
-                  type="button"
-                  onClick={() => update("budgetPreset", value)}
-                >
-                  <strong>{value}</strong>
-                  <span>{desc}</span>
-                </button>
-              ))}
+            <div className="budget-options-layer">
+              {showBudgetWarning ? (
+                <div className="budget-warning" role="alert">
+                  <Info className="budget-warning__icon" size={18} aria-hidden="true" />
+                  <span>{largeBeadBudgetWarningText}</span>
+                </div>
+              ) : null}
+              <div className="budget-grid">
+                {budgetOptions.map(([value, desc]) => {
+                  const isBlocked = isLargeBeadBudgetBlocked(value);
+
+                  return (
+                    <button
+                      className={choiceClass(form.budgetPreset === value)}
+                      data-blocked={isBlocked ? "true" : undefined}
+                      key={value}
+                      type="button"
+                      onClick={() => handleBudgetPresetClick(value)}
+                    >
+                      <strong>{value}</strong>
+                      <span>{desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <label className="exact-budget">
               <span>也可输入具体预算：</span>
@@ -361,19 +565,32 @@ export function QuestionnairePage({
             description="请选择您喜欢的水晶色彩，可补充喜欢和不喜欢的颜色"
             multi
           >
-            <SectionLabel>色彩偏好</SectionLabel>
-            <div className="choice-grid choice-grid--three">
-              {colorIntensityOptions.map((value) => (
-                <button
-                  className={choiceClass(form.colorIntensity === value)}
-                  key={value}
-                  type="button"
-                  onClick={() => update("colorIntensity", value)}
-                >
-                  <span>{value}</span>
-                </button>
-              ))}
-            </div>
+            <section className="color-intensity-panel" aria-label="色彩偏好">
+              <h2 className="color-intensity-title">色彩偏好</h2>
+              <div className="color-options three-columns">
+                {colorIntensityOptions.map((option) => (
+                  <button
+                    aria-pressed={form.colorIntensity === option.value}
+                    className={`color-option color-card${
+                      form.colorIntensity === option.value ? " selected" : ""
+                    }`}
+                    key={option.value}
+                    type="button"
+                    onClick={() => update("colorIntensity", option.value)}
+                  >
+                    <span className="color-icon" aria-hidden="true">
+                      <i
+                        className="fas fa-gem"
+                        style={{ fontSize: "32px", color: option.color }}
+                      />
+                    </span>
+                    <span className="color-text">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <SectionLabel>颜色偏好（若无特别要求，可不选）</SectionLabel>
 
             <SectionLabel>特别喜欢的</SectionLabel>
             <ColorChipGrid
@@ -397,22 +614,35 @@ export function QuestionnairePage({
             description="请选择您喜欢的水晶质感，可多选"
             multi
           >
-            <section className="texture-panel" aria-label="质感偏好">
-              <h2>质感偏好</h2>
-              <div className="texture-grid">
-                {textureOptions.map((value) => (
-                  <button
-                    className={`texture-card${form.textures.includes(value) ? " is-selected" : ""}`}
-                    key={value}
-                    type="button"
-                    onClick={() => toggleList("textures", value)}
-                  >
-                    <span className="texture-card__sample" aria-hidden="true" />
-                    <span>{value}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
+            <div className="texture-options-layer">
+              {showTextureWarning ? (
+                <div className="budget-warning texture-limit-warning" role="alert">
+                  <Info className="budget-warning__icon" size={14} aria-hidden="true" />
+                  <span>{textureLimitWarningText}</span>
+                </div>
+              ) : null}
+              <section className="texture-panel" aria-label="质感偏好">
+                <h2>质感偏好</h2>
+                <div className="texture-grid">
+                  {textureOptions.map((option) => (
+                    <button
+                      aria-pressed={form.textures.includes(option.value)}
+                      className={`texture-card texture-card--${option.tone}${
+                        form.textures.includes(option.value) ? " is-selected" : ""
+                      }`}
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleTextureClick(option.value)}
+                    >
+                      <span className="texture-card__icon-box" aria-hidden="true">
+                        <span className="texture-card__sample" />
+                      </span>
+                      <span className="texture-card__label">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </div>
           </QuestionStep>
         )}
 
@@ -423,21 +653,40 @@ export function QuestionnairePage({
             description="可以选择多种配饰类型"
             multi
           >
-            <div className="accessory-list">
-              {accessoryOptions.map(([value, description, Icon]) => (
-                <button
-                  className={accessoryClass(form.accessories.includes(value))}
-                  key={value}
-                  type="button"
-                  onClick={() => toggleList("accessories", value)}
-                >
-                  <Icon size={20} aria-hidden="true" />
-                  <span>
-                    <strong>{value}</strong>
-                    <small>{description}</small>
-                  </span>
-                </button>
-              ))}
+            <div className="accessory-options-layer">
+              {showAccessoryWarning ? (
+                <div className="budget-warning accessory-limit-warning" role="alert">
+                  <Info className="budget-warning__icon" size={14} aria-hidden="true" />
+                  <span>{accessoryLimitWarningText}</span>
+                </div>
+              ) : null}
+              <div className="accessory-list">
+                {accessoryOptions.map(([value, description, Icon]) => {
+                  const isBudgetBlocked = budgetBlockedAccessories.includes(value);
+
+                  return (
+                    <button
+                      className={accessoryClass(form.accessories.includes(value), isBudgetBlocked)}
+                      data-budget-blocked={isBudgetBlocked ? "true" : undefined}
+                      key={value}
+                      type="button"
+                      onClick={() => handleAccessoryClick(value)}
+                    >
+                      <Icon size={20} aria-hidden="true" />
+                      <span>
+                        <strong>{value}</strong>
+                        <small>{description}</small>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {budgetBlockedAccessories.length > 0 ? (
+                <div className="accessory-budget-hint" role="note">
+                  <Info className="accessory-budget-hint__icon" size={18} aria-hidden="true" />
+                  <span>{accessoryBudgetHintText}</span>
+                </div>
+              ) : null}
             </div>
           </QuestionStep>
         )}
@@ -486,7 +735,14 @@ export function QuestionnairePage({
               <ArrowRight size={18} aria-hidden="true" />
             )}
           </span>
-          {step === 1 ? <Gem className="nav-button__gem" size={22} aria-hidden="true" /> : null}
+          {step < totalSteps ? (
+            <img
+              className="nav-button__logo"
+              src="/brand/nav-logo.png"
+              alt=""
+              aria-hidden="true"
+            />
+          ) : null}
         </button>
         {step > 1 ? <span className="questionnaire-nav__spacer" aria-hidden="true" /> : null}
       </nav>
@@ -728,6 +984,53 @@ function formatWristSize(size: number) {
   return `${Number.isInteger(size) ? size.toFixed(0) : size.toFixed(1)}cm`;
 }
 
+type AccessoryBudgetRestriction = "under500" | "under2000" | null;
+
+function getAccessoryBudgetRestriction(
+  budgetPreset: string,
+  exactBudget: string,
+): AccessoryBudgetRestriction {
+  const exactBudgetText = exactBudget.trim();
+
+  if (exactBudgetText) {
+    const exactBudgetValue = Number(exactBudgetText);
+
+    if (Number.isFinite(exactBudgetValue)) {
+      if (exactBudgetValue <= 500) {
+        return "under500";
+      }
+
+      if (exactBudgetValue <= 2000) {
+        return "under2000";
+      }
+
+      return null;
+    }
+  }
+
+  if (budgetPreset === "500元以内") {
+    return "under500";
+  }
+
+  if (budgetPreset === "500-1000元" || budgetPreset === "1000-2000元") {
+    return "under2000";
+  }
+
+  return null;
+}
+
+function getBudgetBlockedAccessories(restriction: AccessoryBudgetRestriction) {
+  if (restriction === "under500") {
+    return [silverAccessoryValue, kGoldAccessoryValue];
+  }
+
+  if (restriction === "under2000") {
+    return [kGoldAccessoryValue];
+  }
+
+  return [];
+}
+
 function toPreferenceSummary(
   form: QuestionnaireState,
   wristEstimateText: string,
@@ -758,6 +1061,12 @@ function combinationClass(selected: boolean) {
   return selected ? "combination-card is-selected" : "combination-card";
 }
 
-function accessoryClass(selected: boolean) {
-  return selected ? "accessory-option is-selected" : "accessory-option";
+function accessoryClass(selected: boolean, budgetBlocked = false) {
+  return [
+    "accessory-option",
+    selected ? "is-selected" : "",
+    budgetBlocked ? "is-budget-blocked" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }

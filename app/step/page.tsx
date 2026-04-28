@@ -19,7 +19,7 @@ export default function StepPage() {
           返回偏好总结
         </a>
         <Gem size={44} aria-hidden="true" />
-        <h1>品牌名XX能量水晶定制流程</h1>
+        <h1>Snow's Design能量水晶定制流程</h1>
         <p>专业命理分析、专属定制设计与交付流程预览。</p>
       </section>
 

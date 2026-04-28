@@ -41,7 +41,7 @@ export function CompletionPage({
           <ActionLink
             icon={Gem}
             title="了解定制过程"
-            description="查看品牌名XX水晶定制流程"
+            description="查看Snow's Design水晶定制流程"
             href={processHref}
           />
           <ActionLink

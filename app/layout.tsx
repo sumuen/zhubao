@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "品牌名XX定制风格偏好",
+  title: "Snow's Design定制风格偏好",
   description: "纯前端的水晶定制偏好完成页演示",
 };
 
