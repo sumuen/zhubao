@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# production
+build/
+dist/
+
+# local env
+.env*.local
+
+# logs
+*.log
+
+# local screenshots and reference captures
+artifacts/
+local-*.png
+crystal-*.png
+crystal-style.css
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.next
