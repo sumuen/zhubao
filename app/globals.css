@@ -97,7 +97,7 @@ a {
   max-width: calc(100vw - 36px);
   flex-direction: column;
   align-items: center;
-  padding: 34px 24px 52px;
+  padding: 42px 24px 52px;
   overflow: hidden;
   text-align: center;
   background:
@@ -114,11 +114,9 @@ a {
   display: block;
   width: min(100%, 178px);
   height: auto;
-  margin: 0 auto 24px;
-  border-radius: 24px;
-  box-shadow:
-    0 18px 34px rgba(116, 86, 167, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  margin: 0 auto 16px;
+  background: transparent;
+  object-fit: contain;
 }
 
 .welcome-card h1 {
@@ -179,12 +177,12 @@ a {
 
 @media (max-width: 360px) {
   .welcome-card {
-    padding: 30px 18px 48px;
+    padding: 38px 18px 48px;
   }
 
   .welcome-logo {
     width: min(100%, 166px);
-    margin-bottom: 22px;
+    margin-bottom: 14px;
   }
 
   .welcome-card h1 {
@@ -1046,8 +1044,10 @@ a {
 
 .color-intensity-panel {
   display: grid;
+  width: 100%;
   gap: 22px;
   padding: 27px 12px 30px;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 18px;
@@ -1073,13 +1073,16 @@ a {
 
 .color-intensity-panel .color-options.three-columns {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 2.8vw, 15px);
 }
 
 .color-intensity-panel .color-option {
   flex: 1;
-  padding: 15px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 8px;
   border: 3px solid transparent;
   border-radius: 12px;
   color: #333333;
@@ -1108,9 +1111,12 @@ a {
 }
 
 .color-intensity-panel .color-icon {
-  display: block;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  place-items: center;
   margin-bottom: 12px;
-  padding: 20px;
+  padding: 14px 6px;
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -1131,6 +1137,7 @@ a {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .questionnaire-shell--step-6 .choice-grid--three {
@@ -2110,12 +2117,17 @@ a {
 
   .color-intensity-panel .color-options.three-columns {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .color-intensity-panel .color-option {
-    padding: 12px;
+    padding: 10px 6px;
+  }
+
+  .color-intensity-panel .color-icon {
+    margin-bottom: 10px;
+    padding: 12px 4px;
   }
 
   .texture-panel {
@@ -2157,8 +2169,8 @@ a {
   }
 
   .color-intensity-panel .color-options.three-columns {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .texture-grid {
