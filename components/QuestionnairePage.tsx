@@ -551,7 +551,7 @@ export function QuestionnairePage({
               <span>元</span>
             </label>
             <div className="benefit-list">
-              <Benefit threshold="1000元以上" text="赠带有个人八字的专属智能芯片活扣挂坠" />
+              <Benefit threshold="所有价格段均赠送" text="喜马拉雅山脉能量原石、香片、擦银布、精美礼盒、终身售后服务" />
               <Benefit threshold="3000元以上" text="可按需附赠 CMA 国检证书" />
               <Benefit threshold="8000元以上" text="专家鉴选签名，高阶收藏级服务" />
             </div>
@@ -897,27 +897,29 @@ function ColorChipGrid({
     </div>
   );
 }
+type WristSizeCell = number | null;
 
-const wristHeightRanges = [
-  { min: 150, max: 155 },
-  { min: 155, max: 160 },
-  { min: 160, max: 165 },
-  { min: 165, max: 170 },
+const wristHeightValues = [
+  140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190,
 ] as const;
 
-type WristSizeCell = number | null;
-type WristWeightRow =
-  | { minJin: number; maxJin: number; sizes: WristSizeCell[] }
-  | { jin: number; sizes: WristSizeCell[] };
+const wristWeightValuesKg = [
+  35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100,
+] as const;
 
-const wristWeightRows: WristWeightRow[] = [
-  { minJin: 80, maxJin: 90, sizes: [13.5, 13.5, 13.5, null] },
-  { jin: 95, sizes: [14, 14, 14, 14] },
-  { jin: 100, sizes: [15, 14.5, 14.5, 14] },
-  { jin: 110, sizes: [15.5, 15, 15, 14.5] },
-  { jin: 120, sizes: [16, 16, 15.5, 15] },
-  { jin: 130, sizes: [17, 16.5, 16, 15.5] },
-  { jin: 140, sizes: [18, 17, 17, 16] },
+const wristSizeTable: WristSizeCell[][] = [
+  // 35  40  45  50  55  60  65  70  75  80  85  90  95  100 kg
+  [14, 14, 14, 14, 15, 15, 15, 16, 16, 16, 17, 17, 17, 18], // 140cm
+  [14, 14, 15, 15, 15, 16, 16, 16, 17, 17, 17, 18, 18, 18], // 145cm
+  [14, 15, 15, 15, 16, 16, 17, 17, 17, 18, 18, 18, 19, 19], // 150cm
+  [15, 15, 15, 16, 16, 17, 17, 18, 18, 18, 19, 19, 19, 20], // 155cm
+  [15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 19, 20, 20, 20], // 160cm
+  [15, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 20, 21, 21], // 165cm
+  [16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 21, 22], // 170cm
+  [16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 22], // 175cm
+  [17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23], // 180cm
+  [17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23, 24], // 185cm
+  [18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23, 24, 24], // 190cm
 ];
 
 function getWristEstimateText(height: string, weight: string) {
@@ -928,61 +930,38 @@ function getWristEstimateText(height: string, weight: string) {
     return "填写身高体重后估算";
   }
 
-  const heightIndex = getWristHeightIndex(heightValue);
-  const weightRow = getWristWeightRow(weightValue * 2);
+  const heightIndex = getNearestIndex(wristHeightValues, heightValue);
+  const weightIndex = getNearestIndex(wristWeightValuesKg, weightValue);
 
-  if (heightIndex === null || !weightRow) {
+  if (heightIndex === null || weightIndex === null) {
     return "超出参考范围，请人工确认";
   }
 
-  const wristSize = weightRow.sizes[heightIndex];
+  const wristSize = wristSizeTable[heightIndex]?.[weightIndex];
 
   return wristSize ? formatWristSize(wristSize) : "超出参考范围，请人工确认";
 }
 
-function getWristHeightIndex(height: number) {
-  if (
-    height < wristHeightRanges[0].min ||
-    height > wristHeightRanges[wristHeightRanges.length - 1].max
-  ) {
+function getNearestIndex(values: readonly number[], target: number) {
+  const min = values[0];
+  const max = values[values.length - 1];
+
+  if (target < min || target > max) {
     return null;
   }
 
-  const index = wristHeightRanges.findIndex(({ min, max }, rangeIndex) =>
-    rangeIndex === 0 ? height >= min && height <= max : height > min && height <= max,
-  );
+  return values.reduce((nearestIndex, value, index) => {
+    const currentDiff = Math.abs(target - value);
+    const nearestDiff = Math.abs(target - values[nearestIndex]);
 
-  return index === -1 ? null : index;
-}
-
-function getWristWeightRow(weightJin: number) {
-  const firstRow = wristWeightRows[0];
-  const lastRow = wristWeightRows[wristWeightRows.length - 1];
-  const minJin = "minJin" in firstRow ? firstRow.minJin : firstRow.jin;
-  const maxJin = "jin" in lastRow ? lastRow.jin : lastRow.maxJin;
-
-  if (weightJin < minJin || weightJin > maxJin) {
-    return null;
-  }
-
-  const rangeRow = wristWeightRows.find(
-    (row) => "minJin" in row && weightJin >= row.minJin && weightJin <= row.maxJin,
-  );
-
-  if (rangeRow) {
-    return rangeRow;
-  }
-
-  return wristWeightRows
-    .filter((row): row is Extract<WristWeightRow, { jin: number }> => "jin" in row)
-    .reduce((nearest, row) =>
-      Math.abs(weightJin - row.jin) < Math.abs(weightJin - nearest.jin) ? row : nearest,
-    );
+    return currentDiff < nearestDiff ? index : nearestIndex;
+  }, 0);
 }
 
 function formatWristSize(size: number) {
   return `${Number.isInteger(size) ? size.toFixed(0) : size.toFixed(1)}cm`;
 }
+
 
 type AccessoryBudgetRestriction = "under500" | "under2000" | null;
 
