@@ -1,91 +1,110 @@
-# 珠宝偏好问卷前端
+# 珠宝偏好问卷（全栈）
 
-这是一个 Next.js + React + TypeScript 的纯前端项目，用于本地展示珠宝/水晶定制偏好问卷与完成页。
+Next.js + React + TypeScript + Prisma + SQLite 全栈项目，用于珠宝/水晶定制偏好问卷的收集与管理。
 
-## Ubuntu 启动方式
+## Ubuntu 生产部署
 
-### 1. 安装 Node.js
-
-推荐使用 Node.js 20 LTS 或更高版本。
+### 1. 环境准备
 
 ```bash
-node -v
-npm -v
-```
-
-如果 Ubuntu 还没有安装 Node.js，可以使用 NodeSource：
-
-```bash
+# 安装 Node.js 20+
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
+
+# better-sqlite3 原生模块编译依赖
+sudo apt install -y build-essential python3
+
+# 安装 pnpm（可选，也可用 npm）
+npm install -g pnpm
 ```
 
-### 2. 安装项目依赖
-
-进入项目目录后执行：
+### 2. 安装依赖
 
 ```bash
-npm install
+pnpm install
+# 或 npm install
 ```
 
-### 3. 开发模式启动
+`postinstall` 脚本会自动执行 `prisma generate` 生成数据库客户端。
 
-适合本地调试，支持热更新：
+### 3. 初始化数据库
+
+```bash
+pnpm db:push
+# 或 npx prisma db push
+```
+
+会在 `prisma/` 目录下创建 SQLite 数据库文件 `dev.db` 并建表。
+
+### 4. 配置环境变量
+
+复制 `.env.example` 为 `.env`，修改 `ADMIN_TOKEN`：
+
+```bash
+cp .env.example .env
+# 编辑 .env，把 ADMIN_TOKEN 改成你自己的密钥
+```
+
+### 5. 生产模式启动
+
+```bash
+pnpm build
+pnpm start
+# 或 npm run build && npm run start
+```
+
+访问 `http://服务器IP:3000`。
+
+---
+
+## 本地开发
 
 ```bash
 npm run dev
+# 监听所有网络接口
+npm run dev -- --hostname 0.0.0.0
 ```
 
-默认访问：
+---
 
-```text
-http://localhost:3000
-```
+## 页面路由
 
-如果需要让局域网或服务器外部访问：
+| 路径 | 说明 |
+|------|------|
+| `/` | 自动跳转到问卷编辑页 |
+| `/prefer/1?edit=True` | 问卷编辑页（8步完成） |
+| `/prefer/1` | 问卷完成页 demo |
+| `/step` | 定制流程页 |
+| `/CustomerReview` | 顾客反馈页 |
+| `/admin?token=<ADMIN_TOKEN>` | 后台管理页（查看提交数据） |
+
+---
+
+## API
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/submit` | 提交问卷数据（Zod 校验 + IP 限流） |
+
+---
+
+## 数据库
+
+使用 Prisma 7 + SQLite（better-sqlite3 驱动）。
 
 ```bash
-npm run dev -- --hostname 0.0.0.0 --port 3000
+# 查看数据库
+npx prisma studio
+
+# 修改 schema 后同步
+npx prisma db push
 ```
 
-然后访问：
-
-```text
-http://服务器IP:3000
-```
-
-### 4. 生产模式启动
-
-先构建：
-
-```bash
-npm run build
-```
-
-再启动：
-
-```bash
-npm run start
-```
-
-如需指定监听地址和端口：
-
-```bash
-npm run start -- --hostname 0.0.0.0 --port 3000
-```
-
-## 常用页面
-
-```text
-/              自动跳转到问卷编辑页
-/prefer/1?edit=True   默认问卷编辑页，完成全部步骤后进入“问卷完成！”页面
-/prefer/1      问卷完成页 demo
-/step          定制流程页
-/CustomerReview 顾客反馈页
-```
+---
 
 ## 注意事项
 
-- 不要提交 `node_modules/`、`.next/`、`artifacts/` 等本地生成目录。
-- 如果服务器无法访问 `3000` 端口，需要检查云服务器安全组或 Ubuntu 防火墙。
-- 本项目目前是纯前端 mock 数据，不连接后端接口，也不保存真实用户数据。
+- 不要提交 `node_modules/`、`.next/`、`prisma/dev.db`、`prisma/generated/`
+- `.env` 不会被提交，生产环境需手动创建
+- 如果服务器无法访问 `3000` 端口，检查云服务器安全组
+- SQLite 数据库文件位于 `prisma/dev.db`，注意备份
