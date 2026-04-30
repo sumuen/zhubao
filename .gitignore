@@ -26,3 +26,7 @@ crystal-style.css
 Thumbs.db
 .next
 参考
+
+/prisma/generated/
+*.db
+.env

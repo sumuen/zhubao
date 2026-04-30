@@ -114,6 +114,8 @@ export function QuestionnairePage({
   const [form, setForm] = useState<QuestionnaireState>(initialState);
   const [hasStarted, setHasStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [showBudgetWarning, setShowBudgetWarning] = useState(false);
   const [showTextureWarning, setShowTextureWarning] = useState(false);
   const [showAccessoryWarning, setShowAccessoryWarning] = useState(false);
@@ -256,14 +258,32 @@ export function QuestionnairePage({
     });
   }
 
-  function goNext() {
+  async function goNext() {
     if (!isCurrentStepValid) {
       return;
     }
 
     if (step === totalSteps) {
-      setIsComplete(true);
-      window.scrollTo({ top: 0, left: 0 });
+      setIsSubmitting(true);
+      setSubmitError(false);
+      try {
+        const response = await fetch("/api/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...form, wristEstimate: wristEstimateText }),
+        });
+
+        if (!response.ok) {
+          throw new Error("提交失败");
+        }
+
+        setIsComplete(true);
+        window.scrollTo({ top: 0, left: 0 });
+      } catch {
+        setSubmitError(true);
+      } finally {
+        setIsSubmitting(false);
+      }
       return;
     }
 
@@ -709,6 +729,12 @@ export function QuestionnairePage({
         )}
       </section>
 
+      {submitError ? (
+        <div className="submit-error" role="alert">
+          提交失败，请重试
+        </div>
+      ) : null}
+
       <nav
         className={step === 1 ? "questionnaire-nav questionnaire-nav--single" : "questionnaire-nav"}
         aria-label="问卷导航"
@@ -723,13 +749,13 @@ export function QuestionnairePage({
         )}
         <button
           className="nav-button nav-button--primary"
-          disabled={!isCurrentStepValid}
+          disabled={!isCurrentStepValid || isSubmitting}
           type="button"
           onClick={goNext}
         >
           <span className="nav-button__content">
-            {step === totalSteps ? "完成" : "下一步"}
-            {step === totalSteps ? (
+            {isSubmitting ? "提交中..." : step === totalSteps ? "完成" : "下一步"}
+            {isSubmitting ? null : step === totalSteps ? (
               <Check size={18} aria-hidden="true" />
             ) : (
               <ArrowRight size={18} aria-hidden="true" />

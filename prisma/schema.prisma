@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Registration {
+  id                 Int      @id @default(autoincrement())
+  createdAt          DateTime @default(now())
+  beadSizes          String   // comma-separated
+  height             String
+  weight             String
+  wristEstimate      String
+  combinations       String   // comma-separated
+  budgetPreset       String
+  exactBudget        String
+  colorIntensity     String
+  likedColors        String   // comma-separated
+  dislikedColors     String   // comma-separated
+  textures           String   // comma-separated
+  accessories        String   // comma-separated
+  requirements       String
+  syncedToTencentDoc Boolean  @default(false)
+}
